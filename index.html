@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Un jardin lindo, para mi preciosa💜</title>
+<title>Jardín Morado 💜</title>
 
 <style>
 * {
@@ -18,11 +18,10 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #241035;
 }
 
 body {
-    touch-action: none;
+    background: #241035;
 }
 
 canvas {
@@ -45,43 +44,52 @@ const ctx = canvas.getContext("2d");
 let ancho = window.innerWidth;
 let alto = window.innerHeight;
 
-let dpr = Math.min(window.devicePixelRatio || 1, 2);
+let escala = window.devicePixelRatio || 1;
 
 function ajustarCanvas() {
 
     ancho = window.innerWidth;
     alto = window.innerHeight;
 
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    escala = Math.min(window.devicePixelRatio || 1, 2);
 
-    canvas.width = ancho * dpr;
-    canvas.height = alto * dpr;
+    canvas.width = ancho * escala;
+    canvas.height = alto * escala;
 
     canvas.style.width = ancho + "px";
     canvas.style.height = alto + "px";
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.setTransform(
+        escala,
+        0,
+        0,
+        escala,
+        0,
+        0
+    );
 }
 
 ajustarCanvas();
 
-
-// =====================================================
-// CONFIGURACIÓN
-// =====================================================
-
-// 45 segundos por ciclo completo
-const duracionDia = 45000;
-
-const alturaCespedBase = 190;
-
-let alturaCesped = alturaCespedBase;
+const alturaCesped = 190;
 
 let flores = [];
 let corazones = [];
 let mariposas = [];
 let pasto = [];
 let particulas = [];
+
+
+// =====================================================
+// CICLO DEL DÍA
+// =====================================================
+
+/*
+   Antes: 90 segundos.
+   Ahora: 36 segundos.
+*/
+
+const duracionDia = 36000;
 
 let inicioTiempo = performance.now();
 
@@ -109,29 +117,12 @@ const coloresFlores = [
 // RESPONSIVE
 // =====================================================
 
-function esMovil() {
-    return ancho < 700;
+function esCelular() {
+    return ancho <= 600;
 }
 
-function factorResponsive() {
-
-    if (ancho < 420) return 0.72;
-    if (ancho < 700) return 0.84;
-    if (ancho < 1000) return 0.94;
-
-    return 1;
-}
-
-function actualizarDimensiones() {
-
-    alturaCesped =
-        Math.min(
-            220,
-            Math.max(
-                145,
-                alto * (esMovil() ? 0.23 : 0.24)
-            )
-        );
+function esTablet() {
+    return ancho > 600 && ancho <= 900;
 }
 
 
@@ -142,7 +133,6 @@ function actualizarDimensiones() {
 window.addEventListener("resize", () => {
 
     ajustarCanvas();
-    actualizarDimensiones();
 
     flores = [];
     corazones = [];
@@ -160,7 +150,31 @@ window.addEventListener("resize", () => {
 
 
 // =====================================================
-// CICLO DEL DÍA
+// ELEGIR FLOR
+// =====================================================
+
+function elegirTipoFlor() {
+
+    const n = Math.random();
+
+    /*
+        Mucho más probable que aparezcan girasoles.
+    */
+
+    if (n < 0.23) return 0;
+
+    if (n < 0.43) return 1;
+
+    if (n < 0.65) return 2;
+
+    if (n < 0.82) return 3;
+
+    return 4;
+}
+
+
+// =====================================================
+// CICLO
 // =====================================================
 
 function obtenerCiclo() {
@@ -174,7 +188,7 @@ function obtenerCiclo() {
 
 
 // =====================================================
-// INTERPOLAR COLORES
+// MEZCLAR COLORES
 // =====================================================
 
 function mezclarColor(c1, c2, cantidad) {
@@ -199,38 +213,37 @@ function mezclarColor(c1, c2, cantidad) {
 
 
 // =====================================================
-// COLOR DEL CIELO
+// CIELO
 // =====================================================
 
 function obtenerColoresCielo() {
 
     const ciclo = obtenerCiclo();
 
+    const amanecer = {
+        arriba: "#5b3476",
+        abajo: "#e6a5bc"
+    };
+
+    const dia = {
+        arriba: "#6f4b9a",
+        abajo: "#dcaed3"
+    };
+
+    const atardecer = {
+        arriba: "#542653",
+        abajo: "#e5a06e"
+    };
+
     const noche = {
         arriba: "#120a29",
         abajo: "#43215c"
     };
 
-    const amanecer = {
-        arriba: "#65407d",
-        abajo: "#efb0c4"
-    };
 
-    const dia = {
-        arriba: "#7251a0",
-        abajo: "#dfb6d8"
-    };
+    if (ciclo < 0.20) {
 
-    const atardecer = {
-        arriba: "#542653",
-        abajo: "#efa06b"
-    };
-
-
-    // NOCHE → AMANECER
-    if (ciclo < 0.16) {
-
-        const t = ciclo / 0.16;
+        const t = ciclo / 0.20;
 
         return {
             arriba: mezclarColor(
@@ -238,7 +251,6 @@ function obtenerColoresCielo() {
                 amanecer.arriba,
                 t
             ),
-
             abajo: mezclarColor(
                 noche.abajo,
                 amanecer.abajo,
@@ -248,11 +260,9 @@ function obtenerColoresCielo() {
     }
 
 
-    // AMANECER → DÍA
-    if (ciclo < 0.32) {
+    if (ciclo < 0.40) {
 
-        const t =
-            (ciclo - 0.16) / 0.16;
+        const t = (ciclo - 0.20) / 0.20;
 
         return {
             arriba: mezclarColor(
@@ -260,7 +270,6 @@ function obtenerColoresCielo() {
                 dia.arriba,
                 t
             ),
-
             abajo: mezclarColor(
                 amanecer.abajo,
                 dia.abajo,
@@ -270,11 +279,9 @@ function obtenerColoresCielo() {
     }
 
 
-    // DÍA → ATARDECER
-    if (ciclo < 0.58) {
+    if (ciclo < 0.62) {
 
-        const t =
-            (ciclo - 0.32) / 0.26;
+        const t = (ciclo - 0.40) / 0.22;
 
         return {
             arriba: mezclarColor(
@@ -282,7 +289,6 @@ function obtenerColoresCielo() {
                 atardecer.arriba,
                 t
             ),
-
             abajo: mezclarColor(
                 dia.abajo,
                 atardecer.abajo,
@@ -292,11 +298,9 @@ function obtenerColoresCielo() {
     }
 
 
-    // ATARDECER → NOCHE
-    if (ciclo < 0.76) {
+    if (ciclo < 0.80) {
 
-        const t =
-            (ciclo - 0.58) / 0.18;
+        const t = (ciclo - 0.62) / 0.18;
 
         return {
             arriba: mezclarColor(
@@ -304,7 +308,6 @@ function obtenerColoresCielo() {
                 noche.arriba,
                 t
             ),
-
             abajo: mezclarColor(
                 atardecer.abajo,
                 noche.abajo,
@@ -314,16 +317,25 @@ function obtenerColoresCielo() {
     }
 
 
-    // NOCHE
+    const t = (ciclo - 0.80) / 0.20;
+
     return {
-        arriba: noche.arriba,
-        abajo: noche.abajo
+        arriba: mezclarColor(
+            noche.arriba,
+            amanecer.arriba,
+            t
+        ),
+        abajo: mezclarColor(
+            noche.abajo,
+            amanecer.abajo,
+            t
+        )
     };
 }
 
 
 // =====================================================
-// CIELO
+// DIBUJAR CIELO
 // =====================================================
 
 function dibujarCielo() {
@@ -367,68 +379,47 @@ function dibujarSol() {
 
     const ciclo = obtenerCiclo();
 
-    if (ciclo > 0.63) return;
+    if (ciclo >= 0.62) return;
 
-    const t =
-        ciclo / 0.63;
-
-    const escala =
-        factorResponsive();
+    const t = ciclo / 0.62;
 
     const x =
-        ancho * (
+        ancho *
+        (
             0.08 +
             t * 0.84
         );
 
-    const alturaTrayectoria =
-        esMovil()
-            ? 0.43
-            : 0.58;
-
     const y =
-        alto * (
-            0.70 -
-            Math.sin(t * Math.PI) *
-            alturaTrayectoria
+        alto *
+        (
+            0.72 -
+            Math.sin(t * Math.PI) * 0.58
         );
 
     let opacidad = 1;
 
-    if (ciclo > 0.52) {
-
-        opacidad =
-            1 -
-            ((ciclo - 0.52) / 0.11);
-
+    if (y > alto * 0.75) {
+        opacidad = 0.2;
     }
-
-    opacidad =
-        Math.max(
-            0,
-            Math.min(1, opacidad)
-        );
 
     ctx.save();
 
     ctx.globalAlpha = opacidad;
 
-
-    // RESPLANDOR
-
     const brillo =
         ctx.createRadialGradient(
             x,
             y,
-            8,
+            10,
             x,
             y,
-            120 * escala
+            130
         );
 
     brillo.addColorStop(
         0,
-        "rgba(255,240,170,0.45)"
+        "rgba(255,240,170,0.42)"
     );
 
     brillo.addColorStop(
@@ -443,15 +434,13 @@ function dibujarSol() {
     ctx.arc(
         x,
         y,
-        120 * escala,
+        130,
         0,
         Math.PI * 2
     );
 
     ctx.fill();
 
-
-    // RAYOS
 
     ctx.save();
 
@@ -460,8 +449,7 @@ function dibujarSol() {
     ctx.strokeStyle =
         "rgba(255,232,160,0.55)";
 
-    ctx.lineWidth =
-        3 * escala;
+    ctx.lineWidth = 3;
 
     for (let i = 0; i < 12; i++) {
 
@@ -471,15 +459,8 @@ function dibujarSol() {
 
         ctx.beginPath();
 
-        ctx.moveTo(
-            40 * escala,
-            0
-        );
-
-        ctx.lineTo(
-            60 * escala,
-            0
-        );
+        ctx.moveTo(43, 0);
+        ctx.lineTo(63, 0);
 
         ctx.stroke();
     }
@@ -487,16 +468,14 @@ function dibujarSol() {
     ctx.restore();
 
 
-    // SOL
-
     const sol =
         ctx.createRadialGradient(
-            x - 8 * escala,
-            y - 8 * escala,
+            x - 8,
+            y - 8,
             4,
             x,
             y,
-            36 * escala
+            40
         );
 
     sol.addColorStop(
@@ -521,7 +500,7 @@ function dibujarSol() {
     ctx.arc(
         x,
         y,
-        34 * escala,
+        36,
         0,
         Math.PI * 2
     );
@@ -542,12 +521,21 @@ function dibujarLuna() {
 
     let opacidad = 0;
 
-    if (ciclo >= 0.60) {
+    if (ciclo >= 0.60 && ciclo <= 1) {
 
-        if (ciclo < 0.72) {
+        if (ciclo < 0.68) {
 
             opacidad =
-                (ciclo - 0.60) / 0.12;
+                (ciclo - 0.60) / 0.08;
+
+        } else if (ciclo > 0.88) {
+
+            opacidad =
+                1 -
+                (
+                    (ciclo - 0.88) /
+                    0.12
+                );
 
         } else {
 
@@ -555,35 +543,14 @@ function dibujarLuna() {
         }
     }
 
-    // Desaparece antes del amanecer
-    if (ciclo < 0.10) {
-
-        opacidad =
-            Math.max(
-                0,
-                ciclo / 0.10
-            );
-    }
-
     if (opacidad <= 0) return;
 
-    const escala =
-        factorResponsive();
-
-    const x =
-        ancho *
-        (esMovil() ? 0.78 : 0.76);
-
-    const y =
-        alto *
-        (esMovil() ? 0.15 : 0.18);
+    const x = ancho * 0.76;
+    const y = alto * 0.18;
 
     ctx.save();
 
     ctx.globalAlpha = opacidad;
-
-
-    // BRILLO
 
     const brillo =
         ctx.createRadialGradient(
@@ -592,12 +559,12 @@ function dibujarLuna() {
             10,
             x,
             y,
-            95 * escala
+            95
         );
 
     brillo.addColorStop(
         0,
-        "rgba(235,220,255,0.25)"
+        "rgba(235,220,255,0.22)"
     );
 
     brillo.addColorStop(
@@ -612,7 +579,7 @@ function dibujarLuna() {
     ctx.arc(
         x,
         y,
-        95 * escala,
+        95,
         0,
         Math.PI * 2
     );
@@ -620,25 +587,20 @@ function dibujarLuna() {
     ctx.fill();
 
 
-    // LUNA
-
-    ctx.fillStyle =
-        "#f6edff";
+    ctx.fillStyle = "#f6edff";
 
     ctx.beginPath();
 
     ctx.arc(
         x,
         y,
-        34 * escala,
+        34,
         0,
         Math.PI * 2
     );
 
     ctx.fill();
 
-
-    // SOMBRA
 
     ctx.fillStyle =
         "rgba(90,55,120,0.55)";
@@ -646,9 +608,9 @@ function dibujarLuna() {
     ctx.beginPath();
 
     ctx.arc(
-        x + 13 * escala,
-        y - 7 * escala,
-        32 * escala,
+        x + 13,
+        y - 7,
+        32,
         0,
         Math.PI * 2
     );
@@ -669,29 +631,36 @@ function dibujarEstrellas() {
 
     let opacidad = 0;
 
-    // Noche
-    if (ciclo > 0.62) {
+    if (ciclo > 0.58) {
 
         opacidad =
             Math.min(
                 1,
-                (ciclo - 0.62) * 4
+                (ciclo - 0.58) * 4
             );
     }
 
-    // Amanecer
-    if (ciclo < 0.18) {
+    if (ciclo < 0.20) {
 
         opacidad =
             Math.max(
                 0,
-                1 - ciclo / 0.18
+                ciclo / 0.20
             );
+    }
+
+    if (
+        ciclo >= 0.20 &&
+        ciclo <= 0.58
+    ) {
+        opacidad = 0;
     }
 
     if (opacidad <= 0) return;
 
-    for (let i = 0; i < 55; i++) {
+    const cantidad = esCelular() ? 35 : 55;
+
+    for (let i = 0; i < cantidad; i++) {
 
         const x =
             (i * 173.7) % ancho;
@@ -701,7 +670,7 @@ function dibujarEstrellas() {
             (alto * 0.55);
 
         const brillo =
-            0.45 +
+            0.4 +
             Math.sin(
                 performance.now() * 0.001 +
                 i
@@ -737,8 +706,7 @@ function dibujarEstrellas() {
 function dibujarCesped() {
 
     const baseY =
-        alto -
-        alturaCesped;
+        alto - alturaCesped;
 
     const gradiente =
         ctx.createLinearGradient(
@@ -773,8 +741,6 @@ function dibujarCesped() {
     );
 
 
-    // SOMBRA INFERIOR
-
     const sombra =
         ctx.createLinearGradient(
             0,
@@ -805,7 +771,7 @@ function dibujarCesped() {
 
 
 // =====================================================
-// ÁRBOL
+// ÁRBOL RESPONSIVE
 // =====================================================
 
 function dibujarArbol() {
@@ -813,21 +779,44 @@ function dibujarArbol() {
     const baseY =
         alto -
         alturaCesped +
-        10;
+        15;
 
     const x =
-        ancho *
-        (esMovil() ? 0.16 : 0.18);
+        esCelular()
+            ? ancho * 0.20
+            : ancho * 0.18;
 
-    const escalaBase =
-        Math.min(
-            ancho / 1000,
-            1
-        );
 
-    const escala =
-        escalaBase *
-        (esMovil() ? 0.72 : 1);
+    /*
+       Árbol mucho más grande en celular.
+    */
+
+    let escala;
+
+    if (esCelular()) {
+
+        escala =
+            Math.max(
+                0.78,
+                ancho / 430
+            );
+
+    } else if (esTablet()) {
+
+        escala =
+            Math.max(
+                0.72,
+                ancho / 900
+            );
+
+    } else {
+
+        escala =
+            Math.min(
+                ancho / 1000,
+                1
+            );
+    }
 
 
     // SOMBRA
@@ -943,19 +932,31 @@ function dibujarArbol() {
     const ciclo =
         obtenerCiclo();
 
-    const tono =
-        ciclo > 0.58
-            ? "rgba(42,38,68,0.92)"
-            : "#3d7f45";
+    let tono;
+
+    if (ciclo > 0.58) {
+
+        tono =
+            "rgba(42,38,68,0.92)";
+
+    } else {
+
+        tono =
+            "#3d7f45";
+    }
+
 
     const hojas = [
+
         [-105, -230, 75],
         [-55, -270, 80],
         [0, -290, 90],
         [60, -260, 82],
         [105, -220, 70],
         [-5, -220, 95]
+
     ];
+
 
     hojas.forEach(h => {
 
@@ -975,11 +976,9 @@ function dibujarArbol() {
     });
 
 
-    // PEQUEÑAS LUCES
-
     if (
-        ciclo > 0.16 &&
-        ciclo < 0.60
+        ciclo > 0.20 &&
+        ciclo < 0.62
     ) {
 
         ctx.fillStyle =
@@ -989,15 +988,18 @@ function dibujarArbol() {
 
             const lx =
                 x +
-                Math.sin(i * 7.2) *
-                95 *
+                (
+                    Math.sin(i * 7.2) *
+                    95
+                ) *
                 escala;
 
             const ly =
                 baseY -
                 (
                     190 +
-                    Math.cos(i * 4.4) * 75
+                    Math.cos(i * 4.4) *
+                    75
                 ) *
                 escala;
 
@@ -1024,8 +1026,8 @@ function dibujarArbol() {
 function crearPasto() {
 
     const cantidad =
-        esMovil()
-            ? ancho / 3.5
+        esCelular()
+            ? ancho / 1.8
             : ancho / 2.2;
 
     for (let i = 0; i < cantidad; i++) {
@@ -1037,7 +1039,8 @@ function crearPasto() {
 
             y:
                 alto -
-                Math.random() * alturaCesped,
+                Math.random() *
+                alturaCesped,
 
             altura:
                 Math.random() * 24 + 8,
@@ -1046,7 +1049,8 @@ function crearPasto() {
                 Math.random() * 1.2 - 0.6,
 
             fase:
-                Math.random() * Math.PI * 2
+                Math.random() *
+                Math.PI * 2
         });
     }
 }
@@ -1059,7 +1063,9 @@ function dibujarPasto() {
         p.fase += 0.008;
 
         const viento =
-            Math.sin(p.fase) * 1.5;
+            Math.sin(
+                p.fase
+            ) * 1.5;
 
         ctx.strokeStyle =
             Math.random() > 0.5
@@ -1098,23 +1104,6 @@ function dibujarPasto() {
 
 
 // =====================================================
-// ELEGIR FLOR
-// =====================================================
-
-function elegirTipoFlor() {
-
-    const n = Math.random();
-
-    if (n < 0.12) return 0;
-    if (n < 0.32) return 1;
-    if (n < 0.55) return 2;
-    if (n < 0.72) return 3;
-
-    return 4;
-}
-
-
-// =====================================================
 // CREAR JARDÍN
 // =====================================================
 
@@ -1124,51 +1113,68 @@ function crearJardin() {
         alto -
         alturaCesped;
 
-    const factor =
-        factorResponsive();
+
+    /*
+       Muchísimas más flores en celular.
+    */
+
+    let multiplicador;
+
+    if (esCelular()) {
+
+        multiplicador = 1.45;
+
+    } else if (esTablet()) {
+
+        multiplicador = 1.2;
+
+    } else {
+
+        multiplicador = 1;
+    }
 
 
     // FONDO
 
-    const fondoCantidad =
+    const fondo =
         Math.max(
-            12,
+            25,
             Math.floor(
-                ancho / 24
+                ancho / 20 *
+                multiplicador
             )
         );
 
-    for (let i = 0; i < fondoCantidad; i++) {
+
+    for (let i = 0; i < fondo; i++) {
 
         flores.push({
 
             x:
-                Math.random() * ancho,
-
-            // LA BASE DE LA FLOR
-            // queda dentro del césped
+                Math.random() *
+                ancho,
 
             y:
                 baseY +
-                42 +
-                Math.random() * 35,
+                Math.random() * 65,
 
             tipo:
                 elegirTipoFlor(),
 
             size:
-                (
-                    Math.random() * 0.28 +
-                    0.42
-                ) * factor,
+                Math.random() *
+                0.22 +
+                0.58,
 
             profundidad: 0,
 
             balanceo:
-                Math.random() * Math.PI * 2,
+                Math.random() *
+                Math.PI * 2,
 
             velocidad:
-                Math.random() * 0.008 +
+                Math.random() *
+                0.008 +
                 0.004,
 
             color:
@@ -1184,42 +1190,45 @@ function crearJardin() {
 
     // CAPA MEDIA
 
-    const mediaCantidad =
+    const media =
         Math.max(
-            10,
+            22,
             Math.floor(
-                ancho / 28
+                ancho / 25 *
+                multiplicador
             )
         );
 
-    for (let i = 0; i < mediaCantidad; i++) {
+
+    for (let i = 0; i < media; i++) {
 
         flores.push({
 
             x:
-                Math.random() * ancho,
+                Math.random() *
+                ancho,
 
             y:
                 baseY +
-                30 +
-                Math.random() * 28,
+                Math.random() * 48,
 
             tipo:
                 elegirTipoFlor(),
 
             size:
-                (
-                    Math.random() * 0.34 +
-                    0.58
-                ) * factor,
+                Math.random() *
+                0.30 +
+                0.82,
 
             profundidad: 1,
 
             balanceo:
-                Math.random() * Math.PI * 2,
+                Math.random() *
+                Math.PI * 2,
 
             velocidad:
-                Math.random() * 0.010 +
+                Math.random() *
+                0.01 +
                 0.004,
 
             color:
@@ -1235,42 +1244,45 @@ function crearJardin() {
 
     // PRIMER PLANO
 
-    const frenteCantidad =
+    const frente =
         Math.max(
-            7,
+            15,
             Math.floor(
-                ancho / 55
+                ancho / 45 *
+                multiplicador
             )
         );
 
-    for (let i = 0; i < frenteCantidad; i++) {
+
+    for (let i = 0; i < frente; i++) {
 
         flores.push({
 
             x:
-                Math.random() * ancho,
+                Math.random() *
+                ancho,
 
             y:
                 baseY +
-                15 +
-                Math.random() * 18,
+                Math.random() * 30,
 
             tipo:
                 elegirTipoFlor(),
 
             size:
-                (
-                    Math.random() * 0.35 +
-                    0.72
-                ) * factor,
+                Math.random() *
+                0.32 +
+                1.05,
 
             profundidad: 2,
 
             balanceo:
-                Math.random() * Math.PI * 2,
+                Math.random() *
+                Math.PI * 2,
 
             velocidad:
-                Math.random() * 0.012 +
+                Math.random() *
+                0.012 +
                 0.005,
 
             color:
@@ -1299,6 +1311,7 @@ function girasol(f) {
             f.balanceo
         ) * 3;
 
+
     ctx.strokeStyle =
         "#327b3b";
 
@@ -1313,16 +1326,20 @@ function girasol(f) {
     );
 
     ctx.quadraticCurveTo(
+
         f.x + viento,
-        f.y - altura / 2,
+
+        f.y -
+        altura / 2,
+
         f.x + viento,
-        f.y - altura
+
+        f.y -
+        altura
     );
 
     ctx.stroke();
 
-
-    // HOJAS
 
     ctx.fillStyle =
         "#4b9948";
@@ -1341,6 +1358,7 @@ function girasol(f) {
 
     ctx.fill();
 
+
     ctx.beginPath();
 
     ctx.ellipse(
@@ -1356,14 +1374,13 @@ function girasol(f) {
     ctx.fill();
 
 
-    // CABEZA
-
     ctx.save();
 
     ctx.translate(
         f.x + viento,
         f.y - altura
     );
+
 
     for (let i = 0; i < 14; i++) {
 
@@ -1388,6 +1405,7 @@ function girasol(f) {
 
         ctx.fill();
     }
+
 
     ctx.fillStyle =
         "#704214";
@@ -1421,6 +1439,7 @@ function tulipan(f) {
         Math.sin(
             f.balanceo
         ) * 2.5;
+
 
     ctx.strokeStyle =
         "#34823d";
@@ -1535,6 +1554,7 @@ function margarita(f) {
             f.balanceo
         ) * 2;
 
+
     ctx.strokeStyle =
         "#398544";
 
@@ -1583,6 +1603,7 @@ function margarita(f) {
         f.y - altura
     );
 
+
     for (let i = 0; i < 10; i++) {
 
         ctx.rotate(
@@ -1606,6 +1627,7 @@ function margarita(f) {
 
         ctx.fill();
     }
+
 
     ctx.fillStyle =
         "#ffd83b";
@@ -1640,6 +1662,7 @@ function lavanda(f) {
             f.balanceo
         ) * 2;
 
+
     ctx.strokeStyle =
         "#398244";
 
@@ -1671,10 +1694,13 @@ function lavanda(f) {
         ctx.beginPath();
 
         ctx.ellipse(
-
             f.x +
             viento +
-            (i % 2 === 0 ? -7 : 7),
+            (
+                i % 2 === 0
+                    ? -7
+                    : 7
+            ),
 
             f.y -
             18 * f.size -
@@ -1705,7 +1731,6 @@ function lavanda(f) {
         ctx.beginPath();
 
         ctx.arc(
-
             f.x +
             viento +
             Math.sin(i * 1.7) * 5,
@@ -1739,6 +1764,7 @@ function florPequena(f) {
             f.balanceo
         ) * 1.8;
 
+
     ctx.strokeStyle =
         "#3e8745";
 
@@ -1769,6 +1795,7 @@ function florPequena(f) {
         f.y - altura
     );
 
+
     for (let i = 0; i < 6; i++) {
 
         ctx.rotate(
@@ -1792,6 +1819,7 @@ function florPequena(f) {
 
         ctx.fill();
     }
+
 
     ctx.fillStyle =
         "#ffd43b";
@@ -1829,6 +1857,7 @@ function dibujarFlores() {
             f.balanceo +=
                 f.velocidad;
 
+
             switch (f.tipo) {
 
                 case 0:
@@ -1862,36 +1891,39 @@ function dibujarFlores() {
 function crearCorazones() {
 
     const cantidad =
-        esMovil()
+        esCelular()
             ? 65
-            : 100;
+            : 120;
 
     for (let i = 0; i < cantidad; i++) {
 
         corazones.push({
 
             x:
-                Math.random() * ancho,
+                Math.random() *
+                ancho,
 
             y:
-                Math.random() * alto,
+                Math.random() *
+                alto,
 
             size:
-                (
-                    Math.random() * 7 +
-                    7
-                ) *
-                (esMovil() ? 0.82 : 1),
+                Math.random() *
+                8 +
+                5,
 
             velocidad:
-                Math.random() * 0.35 +
+                Math.random() *
+                0.35 +
                 0.08,
 
             movimiento:
-                Math.random() * Math.PI * 2,
+                Math.random() *
+                Math.PI * 2,
 
             transparencia:
-                Math.random() * 0.35 +
+                Math.random() *
+                0.35 +
                 0.20
         });
     }
@@ -1964,6 +1996,7 @@ function actualizarCorazones() {
         c.movimiento +=
             0.008;
 
+
         if (c.y < -30) {
 
             c.y =
@@ -1983,10 +2016,64 @@ function actualizarCorazones() {
 // MARIPOSAS
 // =====================================================
 
+function crearMariposas() {
+
+    const cantidad =
+        esCelular()
+            ? 10
+            : 20;
+
+    for (let i = 0; i < cantidad; i++) {
+
+        mariposas.push({
+
+            x:
+                Math.random() *
+                ancho,
+
+            y:
+                Math.random() *
+                alto *
+                0.55 +
+                40,
+
+            velocidad:
+                Math.random() *
+                0.08 +
+                0.025,
+
+            direccion:
+                Math.random() *
+                Math.PI * 2,
+
+            alas:
+                Math.random() *
+                Math.PI * 2,
+
+            tamaño:
+                Math.random() *
+                0.4 +
+                0.55,
+
+            color:
+                obtenerColorMariposa(),
+
+            cambio:
+                Math.random() *
+                250 +
+                180,
+
+            fase:
+                Math.random() *
+                Math.PI * 2
+        });
+    }
+}
+
+
 function obtenerColorMariposa() {
 
     const colores = [
-
         "#e9a8ff",
         "#ff9dcc",
         "#b794ff",
@@ -2004,67 +2091,13 @@ function obtenerColorMariposa() {
 }
 
 
-function crearMariposas() {
-
-    const cantidad =
-        esMovil()
-            ? 8
-            : 14;
-
-    for (let i = 0; i < cantidad; i++) {
-
-        mariposas.push({
-
-            x:
-                Math.random() * ancho,
-
-            y:
-                Math.random() *
-                alto * 0.50 +
-                alto * 0.08,
-
-            velocidad:
-                Math.random() * 0.08 +
-                0.025,
-
-            direccion:
-                Math.random() *
-                Math.PI * 2,
-
-            alas:
-                Math.random() *
-                Math.PI * 2,
-
-            tamaño:
-                (
-                    Math.random() * 0.4 +
-                    0.55
-                ) *
-                (esMovil() ? 0.82 : 1),
-
-            color:
-                obtenerColorMariposa(),
-
-            cambio:
-                Math.random() * 250 +
-                180,
-
-            fase:
-                Math.random() *
-                Math.PI * 2
-        });
-    }
-}
-
-
 function dibujarMariposa(b) {
 
     const movimientoAlas =
         Math.sin(
             b.alas
-        ) *
-        0.45 +
-        0.65;
+        ) * 0.45 + 0.65;
+
 
     ctx.save();
 
@@ -2078,8 +2111,6 @@ function dibujarMariposa(b) {
         b.tamaño
     );
 
-
-    // ALA IZQUIERDA
 
     ctx.save();
 
@@ -2108,8 +2139,6 @@ function dibujarMariposa(b) {
     ctx.restore();
 
 
-    // ALA DERECHA
-
     ctx.save();
 
     ctx.scale(
@@ -2137,8 +2166,6 @@ function dibujarMariposa(b) {
     ctx.restore();
 
 
-    // CUERPO
-
     ctx.fillStyle =
         "#493653";
 
@@ -2156,8 +2183,6 @@ function dibujarMariposa(b) {
 
     ctx.fill();
 
-
-    // ANTENAS
 
     ctx.strokeStyle =
         "#493653";
@@ -2224,6 +2249,7 @@ function actualizarMariposas() {
         b.fase +=
             0.008;
 
+
         b.cambio--;
 
         if (b.cambio <= 0) {
@@ -2232,8 +2258,7 @@ function actualizarMariposas() {
                 (
                     Math.random() -
                     0.5
-                ) *
-                0.35;
+                ) * 0.35;
 
             b.cambio =
                 Math.random() *
@@ -2243,13 +2268,10 @@ function actualizarMariposas() {
 
 
         if (b.x < -40) {
-
-            b.x =
-                ancho + 40;
+            b.x = ancho + 40;
         }
 
         if (b.x > ancho + 40) {
-
             b.x = -40;
         }
 
@@ -2257,19 +2279,19 @@ function actualizarMariposas() {
 
             b.y = 50;
 
-            b.direccion += 0.1;
+            b.direccion +=
+                0.1;
         }
 
-        if (
-            b.y >
-            alto * 0.68
-        ) {
+        if (b.y > alto * 0.68) {
 
             b.y =
                 alto * 0.65;
 
-            b.direccion -= 0.1;
+            b.direccion -=
+                0.1;
         }
+
 
         dibujarMariposa(b);
     });
@@ -2283,7 +2305,7 @@ function actualizarMariposas() {
 function crearParticulas() {
 
     const cantidad =
-        esMovil()
+        esCelular()
             ? 40
             : 65;
 
@@ -2292,18 +2314,22 @@ function crearParticulas() {
         particulas.push({
 
             x:
-                Math.random() * ancho,
+                Math.random() *
+                ancho,
 
             y:
                 Math.random() *
-                alto * 0.75,
+                alto *
+                0.75,
 
             tamaño:
-                Math.random() * 2 +
+                Math.random() *
+                2 +
                 0.8,
 
             velocidad:
-                Math.random() * 0.12 +
+                Math.random() *
+                0.12 +
                 0.025,
 
             parpadeo:
@@ -2330,6 +2356,7 @@ function dibujarParticulas() {
             );
     }
 
+
     particulas.forEach(p => {
 
         p.y -=
@@ -2338,16 +2365,16 @@ function dibujarParticulas() {
         p.parpadeo +=
             0.025;
 
+
         const opacidad =
             (
                 0.12 +
                 Math.sin(
                     p.parpadeo
-                ) *
-                0.16
+                ) * 0.16
             ) +
-            brilloNoche *
-            0.25;
+            brilloNoche * 0.25;
+
 
         ctx.globalAlpha =
             Math.max(
@@ -2370,6 +2397,7 @@ function dibujarParticulas() {
 
         ctx.fill();
 
+
         if (p.y < 0) {
 
             p.y =
@@ -2377,12 +2405,13 @@ function dibujarParticulas() {
         }
     });
 
+
     ctx.globalAlpha = 1;
 }
 
 
 // =====================================================
-// LUZ DEL CIELO
+// LUZ
 // =====================================================
 
 function dibujarLuz() {
@@ -2390,27 +2419,12 @@ function dibujarLuz() {
     const ciclo =
         obtenerCiclo();
 
-    let intensidad =
-        0.15;
+    let intensidad = 0.16;
 
-    // Más luz durante el día
-    if (
-        ciclo > 0.32 &&
-        ciclo < 0.58
-    ) {
-
-        intensidad =
-            0.20;
+    if (ciclo > 0.58) {
+        intensidad = 0.05;
     }
 
-    // Menos luz de noche
-    if (
-        ciclo > 0.62
-    ) {
-
-        intensidad =
-            0.035;
-    }
 
     const gradiente =
         ctx.createRadialGradient(
@@ -2424,6 +2438,7 @@ function dibujarLuz() {
             alto * 0.8
         );
 
+
     gradiente.addColorStop(
         0,
         `rgba(255,220,255,${intensidad})`
@@ -2433,6 +2448,7 @@ function dibujarLuz() {
         1,
         "rgba(100,40,130,0)"
     );
+
 
     ctx.fillStyle =
         gradiente;
@@ -2482,28 +2498,16 @@ function animar() {
 
     dibujarCesped();
 
-
-    // FLORES
-
     dibujarFlores();
-
-
-    // PASTO DELANTE
 
     dibujarPasto();
 
 
-    // CORAZONES
+    // ELEMENTOS
 
     actualizarCorazones();
 
-
-    // MARIPOSAS
-
     actualizarMariposas();
-
-
-    // PARTÍCULAS
 
     dibujarParticulas();
 
@@ -2515,10 +2519,8 @@ function animar() {
 
 
 // =====================================================
-// INICIAR
+// INICIO
 // =====================================================
-
-actualizarDimensiones();
 
 crearJardin();
 
